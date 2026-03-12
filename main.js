@@ -110,7 +110,7 @@ document.head.appendChild(style);
 
 function openContactModal() {
   const modal = document.getElementById('contact-modal');
-  modal.style.display = 'flex';
+  modal.classList.add('open');
   document.body.style.overflow = 'hidden';
   setTimeout(() => document.getElementById('contact-name').focus(), 100);
 }
@@ -118,14 +118,14 @@ function openContactModal() {
 function closeContactModal(e) {
   if (e && e.target !== document.getElementById('contact-modal')) return;
   const modal = document.getElementById('contact-modal');
-  modal.style.display = 'none';
+  modal.classList.remove('open');
   document.body.style.overflow = '';
 }
 
 // Close on Escape key
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
-    document.getElementById('contact-modal').style.display = 'none';
+    document.getElementById('contact-modal').classList.remove('open');
     document.body.style.overflow = '';
   }
 });

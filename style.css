@@ -341,11 +341,11 @@ body::before {
 /* ── SHARED SECTION STYLES ── */
 .section-label {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.2em;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--violet);
-  font-weight: 400;
+  font-weight: 700;
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
@@ -1024,11 +1024,14 @@ body::before {
   background: rgba(11,9,30,0.85);
   backdrop-filter: blur(8px);
   z-index: 1000;
-  display: flex !important;
   align-items: center;
   justify-content: center;
   padding: 1.5rem;
   animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.open {
+  display: flex;
 }
 
 @keyframes fadeIn {
