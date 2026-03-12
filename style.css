@@ -149,18 +149,18 @@ body::before {
 .nav-links a:hover { color: var(--white); }
 
 .nav-cta {
-  background: var(--violet) !important;
-  color: var(--white) !important;
+  background: var(--teal) !important;
+  color: #0D2A20 !important;
   padding: 0.45rem 1.1rem;
-  border: 1px solid var(--violet) !important;
+  border: 1px solid var(--teal) !important;
   font-weight: 700 !important;
   font-size: 0.82rem !important;
   transition: background 0.15s, box-shadow 0.15s !important;
 }
 
 .nav-cta:hover {
-  background: rgba(108,99,255,0.85) !important;
-  box-shadow: 0 0 20px rgba(108,99,255,0.4) !important;
+  background: rgba(80,200,160,0.85) !important;
+  box-shadow: 0 0 20px rgba(80,200,160,0.35) !important;
 }
 
 /* ── HERO ── */
@@ -387,6 +387,10 @@ body::before {
   z-index: 1;
 }
 
+.problem-card:nth-child(1)::before { background: var(--pink); }
+.problem-card:nth-child(2)::before { background: var(--violet); }
+.problem-card:nth-child(3)::before { background: var(--teal); }
+
 .problem-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -467,9 +471,9 @@ body::before {
 
 .step-icon {
   width: 48px; height: 48px;
-  color: var(--violet);
+  color: var(--teal);
   flex-shrink: 0;
-  border: 1px solid var(--border-bright);
+  border: 1px solid rgba(80,200,160,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -574,22 +578,21 @@ body::before {
   align-items: center;
   gap: 0.5rem;
   background: transparent;
-  color: var(--violet);
+  color: var(--pink);
   text-decoration: none;
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.75rem;
   padding: 0.75rem 1.5rem;
-  border: 1px solid var(--violet);
+  border: 1px solid var(--pink);
   transition: background 0.15s, box-shadow 0.15s;
   letter-spacing: 0.04em;
   font-family: var(--font-mono);
   text-transform: uppercase;
-  font-size: 0.75rem;
 }
 
 .politicians-cta:hover {
-  background: var(--violet-dim);
-  box-shadow: 0 0 24px rgba(108,99,255,0.25);
+  background: var(--pink-dim);
+  box-shadow: 0 0 24px rgba(224,92,122,0.25);
 }
 
 /* DATA CARDS */
@@ -753,7 +756,7 @@ body::before {
   position: absolute;
   top: 0; left: 0; right: 0;
   height: 2px;
-  background: var(--violet);
+  background: var(--teal);
   transform: scaleX(0);
   transition: transform 0.3s ease;
   transform-origin: left;
@@ -845,8 +848,8 @@ body::before {
 .waitlist-input:focus { background: var(--bg-card-alt); }
 
 .waitlist-btn {
-  background: var(--violet);
-  color: var(--white);
+  background: var(--teal);
+  color: #0D2A20;
   border: none;
   padding: 0.9rem 1.5rem;
   font-family: var(--font-mono);
@@ -860,8 +863,8 @@ body::before {
 }
 
 .waitlist-btn:hover {
-  background: rgba(108,99,255,0.85);
-  box-shadow: 0 0 24px rgba(108,99,255,0.4);
+  background: rgba(80,200,160,0.85);
+  box-shadow: 0 0 24px rgba(80,200,160,0.35);
 }
 
 .waitlist-btn:disabled { opacity: 0.5; cursor: default; box-shadow: none; }
@@ -969,3 +972,23 @@ body::before {
   .stat-divider { display: none; }
   .footer-inner { flex-direction: column; align-items: flex-start; }
 }
+
+/* ── COLOR ACCENTS ── */
+.section-label.pink { color: var(--pink); }
+.section-label.pink::before { background: var(--pink); }
+
+/* Stat num - brighter */
+.stat-num { font-family: var(--font-display); font-size: 1rem; font-weight: 900; color: var(--teal); }
+
+/* Waitlist form border glow on focus */
+.waitlist-form:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 0 20px rgba(80,200,160,0.15);
+}
+
+/* Politicians list check mark - teal */
+.check { color: var(--teal); font-weight: 700; flex-shrink: 0; font-family: var(--font-mono); }
+
+/* Data bar support color brighter */
+.data-bar-fill.support { background: var(--teal); }
+.data-bar-fill.oppose  { background: var(--pink); }
