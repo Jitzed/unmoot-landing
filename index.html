@@ -65,8 +65,8 @@
     <div class="container hero-inner">
       <div class="hero-text">
         <div class="eyebrow">
-          <span class="eyebrow-dot"></span>
-          Civic Intelligence Platform
+          <span class="eyebrow-dot" style="background:#6C63FF;"></span>
+          <span style="color:#50C8A0;">Civic Intelligence Platform</span>
         </div>
         <h1 class="hero-headline">
           Your voice,<br />
@@ -199,7 +199,7 @@
     <div class="container">
       <div class="politicians-inner">
         <div class="politicians-text">
-          <div class="section-label light">For Elected Officials & Media</div>
+          <div class="section-label light" style="font-size:0.82rem;font-weight:700;letter-spacing:0.14em;">For Elected Officials &amp; Media</div>
           <h2 class="section-headline light">
             Finally —<br />
             Constituent Data<br />
@@ -213,7 +213,7 @@
           <ul class="politicians-list">
             <li>
               <span class="check">✓</span>
-              District-level filtering — see how <em>your</em> constituents feel, not national averages
+              <span>District-level filtering — see how <em>your</em> constituents feel, not national averages</span>
             </li>
             <li>
               <span class="check">✓</span>
@@ -228,7 +228,7 @@
               Immutable audit trail — every data point is blockchain-verified
             </li>
           </ul>
-          <a href="mailto:info@unmoot.app" class="politicians-cta">Request Early Access →</a>
+          <button class="politicians-cta" onclick="openContactModal()">Request Early Access →</button>
         </div>
         <div class="politicians-visual">
           <div class="data-card">
@@ -359,6 +359,34 @@
       <div class="footer-copy">© 2026 UnMoot. All rights reserved.</div>
     </div>
   </footer>
+
+
+  <!-- ── CONTACT MODAL ── -->
+  <div id="contact-modal" class="modal-overlay" style="display:none;" onclick="closeContactModal(event)">
+    <div class="modal-box">
+      <button class="modal-close" onclick="closeContactModal()">&times;</button>
+      <div class="modal-label">Early Access Request</div>
+      <h3 class="modal-title">Get notified when<br/>UnMoot goes live.</h3>
+      <p class="modal-sub">Tell us who you are and we'll be in touch directly.</p>
+      <form id="contact-form" onsubmit="submitContact(event)">
+        <div class="modal-row">
+          <input class="modal-input" type="text" id="contact-name" placeholder="Your name" required />
+          <input class="modal-input" type="text" id="contact-org" placeholder="Organization / Title" />
+        </div>
+        <input class="modal-input" type="email" id="contact-email" placeholder="your@email.com" required />
+        <textarea class="modal-textarea" id="contact-message" placeholder="Tell us about yourself — are you a campaign manager, journalist, policy researcher? What data would be most useful to you?" rows="4" required></textarea>
+        <button type="submit" class="modal-submit" id="modal-submit-btn">
+          <span id="modal-btn-text">Send Request →</span>
+        </button>
+      </form>
+      <div id="modal-success" style="display:none;" class="modal-success">
+        <div class="modal-success-icon">✓</div>
+        <div class="modal-success-title">Request received.</div>
+        <div class="modal-success-sub">We'll reach out to <span id="success-email"></span> within 48 hours.</div>
+      </div>
+      <div class="modal-privacy">🔒 Your information is never sold or shared with third parties.</div>
+    </div>
+  </div>
 
   <script src="main.js"></script>
 </body>
