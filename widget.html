@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnMoot — Make Your Voice Count</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0B1120;
+    --navy-mid: #141C2F;
+    --navy-light: #1E2B45;
+    --gold: #C9A84C;
+    --gold-light: #E8C97A;
+    --white: #F5F3EE;
+    --muted: #8896A8;
+    --yes: #4C9A6A;
+    --no: #9A4C4C;
+    --unsure: #4C6A9A;
+  }
+
+  body {
+    background: var(--navy);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--white);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  /* ── WIDGET CONTAINER ── */
+  .widget {
+    width: 100%;
+    max-width: 520px;
+    background: var(--navy-mid);
+    border: 1px solid rgba(201,168,76,0.25);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.08);
+    position: relative;
+  }
+
+  /* gold accent bar */
+  .widget::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+  }
+
+  /* ── HEADER ── */
+  .header {
+    padding: 1.75rem 2rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .logo-mark {
+    width: 36px; height: 36px;
+    background: var(--gold);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg { width: 18px; height: 18px; }
+
+  .logo-text {
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 1.2rem;
+    letter-spacing: -0.01em;
+    color: var(--white);
+  }
+
+  .logo-text span { color: var(--gold); }
+
+  .badge {
+    margin-left: auto;
+    font-size: 0.65rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--gold);
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.3);
+    padding: 0.25rem 0.6rem;
+    border-radius: 2px;
+  }
+
+  /* ── SCREEN: POLL ── */
+  .screen { display: none; animation: fadeUp 0.4s ease forwards; }
+  .screen.active { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .poll-body { padding: 1.75rem 2rem; }
+
+  .issue-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .issue-tag::before {
+    content: '';
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--gold);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .question {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--white);
+    margin-bottom: 1.5rem;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 0.6rem; }
+
+  .option-btn {
+    width: 100%;
+    padding: 0.85rem 1.2rem;
+    background: var(--navy-light);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 3px;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    transition: all 0.18s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .option-btn::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.18s;
+  }
+
+  .option-btn.yes::after  { background: rgba(76,154,106,0.1); }
+  .option-btn.no::after   { background: rgba(154,76,76,0.1); }
+  .option-btn.unsure::after { background: rgba(76,106,154,0.1); }
+
+  .option-btn:hover { border-color: rgba(201,168,76,0.4); transform: translateX(3px); }
+  .option-btn:hover::after { opacity: 1; }
+
+  .option-icon {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+
+  .option-btn.yes  .option-icon { background: rgba(76,154,106,0.2); color: #6DC98A; }
+  .option-btn.no   .option-icon { background: rgba(154,76,76,0.2);  color: #C96D6D; }
+  .option-btn.unsure .option-icon { background: rgba(76,106,154,0.2); color: #6D8DC9; }
+
+  .option-label { flex: 1; }
+  .option-arrow { color: var(--muted); font-size: 0.8rem; margin-left: auto; transition: transform 0.18s; }
+  .option-btn:hover .option-arrow { transform: translateX(3px); color: var(--gold); }
+
+  /* ── RESULTS BAR ── */
+  .results { padding: 1.5rem 2rem; }
+
+  .result-item { margin-bottom: 1rem; }
+
+  .result-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    font-weight: 500;
+    margin-bottom: 0.35rem;
+    color: var(--white);
+  }
+
+  .result-pct { color: var(--gold); font-weight: 700; }
+
+  .bar-track {
+    height: 6px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.8s cubic-bezier(0.16,1,0.3,1);
+  }
+
+  .bar-fill.yes    { background: linear-gradient(90deg, #4C9A6A, #6DC98A); }
+  .bar-fill.no     { background: linear-gradient(90deg, #9A4C4C, #C96D6D); }
+  .bar-fill.unsure { background: linear-gradient(90deg, #4C6A9A, #6D8DC9); }
+
+  .results-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  .next-poll-btn {
+    background: none;
+    border: 1px solid rgba(201,168,76,0.3);
+    color: var(--gold);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35rem 0.85rem;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.04em;
+  }
+
+  .next-poll-btn:hover { background: rgba(201,168,76,0.12); border-color: var(--gold); }
+
+  /* ── SCREEN: CAPTURE ── */
+  .capture-body { padding: 1.75rem 2rem; }
+
+  .capture-icon {
+    width: 52px; height: 52px;
+    background: rgba(201,168,76,0.12);
+    border: 1px solid rgba(201,168,76,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .capture-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .capture-sub {
+    font-size: 0.83rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 1.5rem;
+  }
+
+  .form-row { display: flex; gap: 0.5rem; margin-bottom: 0.75rem; }
+
+  .input-field {
+    flex: 1;
+    background: var(--navy-light);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 3px;
+    padding: 0.75rem 1rem;
+    color: var(--white);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .input-field::placeholder { color: var(--muted); }
+  .input-field:focus { border-color: rgba(201,168,76,0.5); }
+
+  .submit-btn {
+    background: var(--gold);
+    color: var(--navy);
+    border: none;
+    border-radius: 3px;
+    padding: 0.75rem 1.25rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+
+  .submit-btn:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+
+  .privacy-note {
+    font-size: 0.7rem;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .privacy-note svg { opacity: 0.5; flex-shrink: 0; }
+
+  /* ── SCREEN: CONFIRMED ── */
+  .confirmed-body {
+    padding: 2.5rem 2rem;
+    text-align: center;
+  }
+
+  .check-ring {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem;
+    margin: 0 auto 1.25rem;
+    animation: ringIn 0.5s ease forwards;
+  }
+
+  @keyframes ringIn {
+    from { transform: scale(0.6); opacity: 0; }
+    to   { transform: scale(1);   opacity: 1; }
+  }
+
+  .confirmed-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .confirmed-sub {
+    font-size: 0.83rem;
+    color: var(--muted);
+    line-height: 1.55;
+    max-width: 320px;
+    margin: 0 auto 1.5rem;
+  }
+
+  .share-row {
+    display: flex;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .share-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 1rem;
+    border-radius: 3px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.04);
+    color: var(--white);
+    transition: all 0.15s;
+    text-decoration: none;
+  }
+
+  .share-btn:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
+
+  /* ── FOOTER ── */
+  .widget-footer {
+    padding: 0.85rem 2rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.68rem;
+    color: var(--muted);
+  }
+
+  .pulse-count {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .pulse-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--yes);
+    animation: pulse 1.8s infinite;
+  }
+
+  /* ── PROGRESS DOTS ── */
+  .progress-dots {
+    display: flex;
+    gap: 4px;
+    padding: 0.6rem 2rem 0;
+  }
+
+  .dot {
+    height: 3px;
+    border-radius: 2px;
+    background: rgba(255,255,255,0.12);
+    flex: 1;
+    transition: background 0.3s;
+  }
+
+  .dot.active { background: var(--gold); }
+  .dot.done   { background: rgba(201,168,76,0.4); }
+</style>
+</head>
+<body>
+
+<div class="widget" id="unmoot-widget">
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#0B1120" stroke-width="2.5" stroke-linecap="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+    </div>
+    <div class="logo-text">Un<span>Moot</span></div>
+    <div class="badge">Beta</div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-dots">
+    <div class="dot active" id="d1"></div>
+    <div class="dot" id="d2"></div>
+    <div class="dot" id="d3"></div>
+  </div>
+
+  <!-- SCREEN 1: POLL -->
+  <div class="screen active" id="screen-poll">
+    <div class="poll-body">
+      <div class="issue-tag" id="issue-tag">Loading issue…</div>
+      <div class="question" id="question-text">Loading question…</div>
+      <div class="options">
+        <button class="option-btn yes" onclick="vote('support')">
+          <div class="option-icon">✓</div>
+          <div class="option-label">I Support This</div>
+          <div class="option-arrow">→</div>
+        </button>
+        <button class="option-btn no" onclick="vote('oppose')">
+          <div class="option-icon">✕</div>
+          <div class="option-label">I Oppose This</div>
+          <div class="option-arrow">→</div>
+        </button>
+        <button class="option-btn unsure" onclick="vote('unsure')">
+          <div class="option-icon">?</div>
+          <div class="option-label">I'm Undecided</div>
+          <div class="option-arrow">→</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- RESULTS (hidden until after vote) -->
+    <div id="results-panel" style="display:none;">
+      <div class="results">
+        <div class="result-item">
+          <div class="result-row"><span>Support</span><span class="result-pct" id="pct-support">—</span></div>
+          <div class="bar-track"><div class="bar-fill yes" id="bar-support"></div></div>
+        </div>
+        <div class="result-item">
+          <div class="result-row"><span>Oppose</span><span class="result-pct" id="pct-oppose">—</span></div>
+          <div class="bar-track"><div class="bar-fill no" id="bar-oppose"></div></div>
+        </div>
+        <div class="result-item">
+          <div class="result-row"><span>Undecided</span><span class="result-pct" id="pct-unsure">—</span></div>
+          <div class="bar-track"><div class="bar-fill unsure" id="bar-unsure"></div></div>
+        </div>
+        <div class="results-meta">
+          <span id="vote-count">— verified votes</span>
+          <button class="next-poll-btn" onclick="showCapture()">Join the waitlist →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: EMAIL CAPTURE -->
+  <div class="screen" id="screen-capture">
+    <div class="capture-body">
+      <div class="capture-icon">🗳️</div>
+      <div class="capture-title">Your voice is being recorded.</div>
+      <div class="capture-sub">
+        UnMoot delivers verified constituent data to the people who represent you.
+        Join the waitlist and we'll notify you when your district goes live — and share how your vote compares to your neighbors'.
+      </div>
+      <div class="form-row">
+        <input class="input-field" type="email" id="email-input" placeholder="your@email.com" />
+        <button class="submit-btn" onclick="submitEmail()">Join →</button>
+      </div>
+      <div class="privacy-note">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        No spam. No data sold. KYC verification protects your identity.
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: CONFIRMED -->
+  <div class="screen" id="screen-confirmed">
+    <div class="confirmed-body">
+      <div class="check-ring">✓</div>
+      <div class="confirmed-title">You're on the list.</div>
+      <div class="confirmed-sub">
+        We'll let you know when UnMoot launches in your district.
+        In the meantime — help us reach critical mass.
+      </div>
+      <div class="share-row">
+        <a class="share-btn" id="share-x" href="#" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.744l7.73-8.835L1.254 2.25H8.08l4.253 5.622zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Share on X
+        </a>
+        <a class="share-btn" id="share-li" href="#" target="_blank">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"/><circle cx="4" cy="4" r="2"/></svg>
+          Share on LinkedIn
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="widget-footer">
+    <div class="pulse-count">
+      <div class="pulse-dot"></div>
+      <span id="footer-count">2,841 Americans have voted today</span>
+    </div>
+    <span>unmoot.app</span>
+  </div>
+</div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────
+// Rotate these to simulate daily fresh polls. In production, pull from API.
+const POLLS = [
+  {
+    tag: "🔥 Trending · Immigration",
+    question: "Should the U.S. implement a points-based immigration system prioritizing skilled workers?",
+    results: { support: 54, oppose: 31, unsure: 15 },
+    votes: "18,402"
+  },
+  {
+    tag: "📋 Active Legislation · Healthcare",
+    question: "Should prescription drug price negotiations be expanded to cover more medications?",
+    results: { support: 71, oppose: 19, unsure: 10 },
+    votes: "24,118"
+  },
+  {
+    tag: "⚡ Hot Topic · Energy",
+    question: "Should the federal government fast-track permits for domestic natural gas production?",
+    results: { support: 48, oppose: 38, unsure: 14 },
+    votes: "11,903"
+  },
+  {
+    tag: "🏛️ Congress · Education",
+    question: "Should federal student loan forgiveness programs be expanded or eliminated?",
+    results: { support: 44, oppose: 43, unsure: 13 },
+    votes: "31,774"
+  },
+  {
+    tag: "🗳️ Ballot Initiative · Economy",
+    question: "Should the federal minimum wage be raised to $17/hour and indexed to inflation?",
+    results: { support: 61, oppose: 29, unsure: 10 },
+    votes: "27,559"
+  }
+];
+
+// Pick a poll (rotate by day-of-week for demo)
+const todayPoll = POLLS[new Date().getDay() % POLLS.length];
+let userVote = null;
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+document.getElementById('issue-tag').textContent = todayPoll.tag;
+document.getElementById('question-text').textContent = todayPoll.question;
+document.getElementById('footer-count').textContent =
+  `${Number(todayPoll.votes.replace(/,/g,'')).toLocaleString()} Americans have voted today`;
+
+// ── VOTE ──────────────────────────────────────────────────────────────────
+function vote(choice) {
+  userVote = choice;
+
+  // Disable option buttons
+  document.querySelectorAll('.option-btn').forEach(b => {
+    b.style.opacity = '0.45';
+    b.style.cursor  = 'default';
+    b.onclick = null;
+  });
+
+  // Highlight chosen
+  const map = { support: '.yes', oppose: '.no', unsure: '.unsure' };
+  const chosen = document.querySelector(map[choice]);
+  if (chosen) {
+    chosen.style.opacity = '1';
+    chosen.style.borderColor = 'rgba(201,168,76,0.7)';
+    chosen.style.background  = 'rgba(201,168,76,0.08)';
+  }
+
+  // Show results after brief delay
+  setTimeout(() => showResults(choice), 320);
+}
+
+function showResults(choice) {
+  const r = todayPoll.results;
+  document.getElementById('results-panel').style.display = 'block';
+
+  // Slight nudge toward user's vote for engagement hook
+  const nudge = 2;
+  let s = r.support + (choice === 'support' ? nudge : 0);
+  let o = r.oppose  + (choice === 'oppose'  ? nudge : 0);
+  let u = r.unsure  + (choice === 'unsure'  ? nudge : 0);
+  const total = s + o + u;
+  s = Math.round(s/total*100);
+  o = Math.round(o/total*100);
+  u = 100 - s - o;
+
+  document.getElementById('pct-support').textContent = s + '%';
+  document.getElementById('pct-oppose').textContent  = o + '%';
+  document.getElementById('pct-unsure').textContent  = u + '%';
+  document.getElementById('vote-count').textContent  = todayPoll.votes + ' verified votes';
+
+  setTimeout(() => {
+    document.getElementById('bar-support').style.width = s + '%';
+    document.getElementById('bar-oppose').style.width  = o + '%';
+    document.getElementById('bar-unsure').style.width  = u + '%';
+  }, 50);
+
+  // Track engagement (replace with real analytics endpoint)
+  trackEvent('vote', { choice, poll: todayPoll.tag });
+}
+
+// ── CAPTURE ───────────────────────────────────────────────────────────────
+function showCapture() {
+  setScreen('capture');
+  document.getElementById('d1').classList.add('done');
+  document.getElementById('d1').classList.remove('active');
+  document.getElementById('d2').classList.add('active');
+  trackEvent('capture_shown', {});
+}
+
+async function submitEmail() {
+  const email = document.getElementById('email-input').value.trim();
+  if (!email || !email.includes('@')) {
+    document.getElementById('email-input').style.borderColor = 'rgba(154,76,76,0.7)';
+    document.getElementById('email-input').focus();
+    return;
+  }
+
+  const btn = document.querySelector('.submit-btn');
+  btn.textContent = 'Saving…';
+  btn.disabled = true;
+
+  await saveToWaitlist(email, userVote, todayPoll.tag);
+
+  btn.textContent = 'Join →';
+  btn.disabled = false;
+
+  // Build share links
+  const msg = encodeURIComponent(`I just voted on UnMoot — a new platform that delivers verified constituent data to politicians. Join the waitlist: https://unmoot.app`);
+  document.getElementById('share-x').href  = `https://twitter.com/intent/tweet?text=${msg}`;
+  document.getElementById('share-li').href = `https://www.linkedin.com/sharing/share-offsite/?url=https://unmoot.app`;
+
+  setScreen('confirmed');
+  document.getElementById('d2').classList.add('done');
+  document.getElementById('d2').classList.remove('active');
+  document.getElementById('d3').classList.add('active');
+  trackEvent('waitlist_join', { email_domain: email.split('@')[1] });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────
+function setScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + name);
+  if (el) {
+    el.classList.add('active');
+    // Re-trigger animation
+    void el.offsetWidth;
+  }
+}
+
+// ── ANALYTICS ─────────────────────────────────────────────────────────────
+// Replace with your real analytics (Segment, PostHog, Mixpanel, etc.)
+function trackEvent(event, props) {
+  console.log('[UnMoot]', event, props);
+  // Example: window.analytics && window.analytics.track(event, props);
+  // Example: fetch('/api/track', { method:'POST', body: JSON.stringify({event, ...props}) });
+}
+
+// ── WAITLIST SAVE → SUPABASE ──────────────────────────────────────────────
+const SUPABASE_URL = 'https://mrriqdjucenfcrykrlcs.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_viCur_nFYScxHve6dVGcow_pPNHlbT7';
+
+async function saveToWaitlist(email, vote, pollTag) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/waitlist`, {
+      method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'apikey':        SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer':        'return=minimal',
+      },
+      body: JSON.stringify({
+        email:  email,
+        vote:   vote,
+        issue:  pollTag,
+        source: 'widget',
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('[UnMoot] Supabase error:', err);
+    } else {
+      console.log('[UnMoot] Waitlist entry saved ✓', { email, vote, pollTag });
+    }
+  } catch (e) {
+    console.error('[UnMoot] Network error saving to Supabase:', e);
+  }
+}
+</script>
+</body>
+</html>
