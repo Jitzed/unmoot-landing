@@ -10,11 +10,11 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --navy: #0B1120;
-    --navy-mid: #141C2F;
-    --navy-light: #1E2B45;
-    --gold: #C9A84C;
-    --gold-light: #E8C97A;
+    --navy: #1E1E30;
+    --navy-mid: #11111D;
+    --navy-light: #1A1836;
+    --gold: #6C63FF;
+    --gold-light: #8B85FF;
     --white: #F5F3EE;
     --muted: #8896A8;
     --yes: #4C9A6A;
@@ -38,10 +38,10 @@
     width: 100%;
     max-width: 520px;
     background: var(--navy-mid);
-    border: 1px solid rgba(201,168,76,0.25);
+    border: 1px solid rgba(108,99,255,0.3);
     border-radius: 4px;
     overflow: hidden;
-    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(201,168,76,0.08);
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(108,99,255,0.1);
     position: relative;
   }
 
@@ -51,7 +51,7 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--gold), var(--gold-light), var(--gold));
+    background: var(--gold);
   }
 
   /* ── HEADER ── */
@@ -66,7 +66,7 @@
   .logo-mark {
     width: 36px; height: 36px;
     background: var(--gold);
-    border-radius: 50%;
+    border-radius: 4px;
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0;
   }
@@ -90,8 +90,8 @@
     letter-spacing: 0.12em;
     text-transform: uppercase;
     color: var(--gold);
-    background: rgba(201,168,76,0.12);
-    border: 1px solid rgba(201,168,76,0.3);
+    background: rgba(108,99,255,0.15);
+    border: 1px solid rgba(108,99,255,0.4);
     padding: 0.25rem 0.6rem;
     border-radius: 2px;
   }
@@ -175,7 +175,7 @@
   .option-btn.no::after   { background: rgba(154,76,76,0.1); }
   .option-btn.unsure::after { background: rgba(76,106,154,0.1); }
 
-  .option-btn:hover { border-color: rgba(201,168,76,0.4); transform: translateX(3px); }
+  .option-btn:hover { border-color: rgba(108,99,255,0.5); transform: translateX(3px); }
   .option-btn:hover::after { opacity: 1; }
 
   .option-icon {
@@ -241,7 +241,7 @@
 
   .next-poll-btn {
     background: none;
-    border: 1px solid rgba(201,168,76,0.3);
+    border: 1px solid rgba(108,99,255,0.4);
     color: var(--gold);
     font-family: 'DM Sans', sans-serif;
     font-size: 0.75rem;
@@ -253,15 +253,15 @@
     letter-spacing: 0.04em;
   }
 
-  .next-poll-btn:hover { background: rgba(201,168,76,0.12); border-color: var(--gold); }
+  .next-poll-btn:hover { background: rgba(108,99,255,0.15); border-color: var(--gold); }
 
   /* ── SCREEN: CAPTURE ── */
   .capture-body { padding: 1.75rem 2rem; }
 
   .capture-icon {
     width: 52px; height: 52px;
-    background: rgba(201,168,76,0.12);
-    border: 1px solid rgba(201,168,76,0.3);
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.3);
     border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.5rem;
@@ -299,11 +299,11 @@
   }
 
   .input-field::placeholder { color: var(--muted); }
-  .input-field:focus { border-color: rgba(201,168,76,0.5); }
+  .input-field:focus { border-color: rgba(108,99,255,0.6); }
 
   .submit-btn {
     background: var(--gold);
-    color: var(--navy);
+    color: #ffffff;
     border: none;
     border-radius: 3px;
     padding: 0.75rem 1.25rem;
@@ -410,7 +410,7 @@
   .pulse-dot {
     width: 6px; height: 6px;
     border-radius: 50%;
-    background: var(--yes);
+    background: #50C8A0;
     animation: pulse 1.8s infinite;
   }
 
@@ -430,7 +430,7 @@
   }
 
   .dot.active { background: var(--gold); }
-  .dot.done   { background: rgba(201,168,76,0.4); }
+  .dot.done   { background: rgba(108,99,255,0.4); }
 </style>
 </head>
 <body>
@@ -439,7 +439,7 @@
   <!-- HEADER -->
   <div class="header">
     <div class="logo-mark">
-      <svg viewBox="0 0 24 24" fill="none" stroke="#0B1120" stroke-width="2.5" stroke-linecap="round">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1E1E30" stroke-width="2.5" stroke-linecap="round">
         <path d="M12 2L2 7l10 5 10-5-10-5z"/>
         <path d="M2 17l10 5 10-5"/>
         <path d="M2 12l10 5 10-5"/>
@@ -617,8 +617,8 @@ function vote(choice) {
   const chosen = document.querySelector(map[choice]);
   if (chosen) {
     chosen.style.opacity = '1';
-    chosen.style.borderColor = 'rgba(201,168,76,0.7)';
-    chosen.style.background  = 'rgba(201,168,76,0.08)';
+    chosen.style.borderColor = 'rgba(108,99,255,0.7)';
+    chosen.style.background  = 'rgba(108,99,255,0.08)';
   }
 
   // Show results after brief delay
