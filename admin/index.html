@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UnMoot Admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:      #11111D;
+  --surface: #1A1836;
+  --card:    #1E1E30;
+  --card2:   #221F3D;
+  --violet:  #6C63FF;
+  --teal:    #50C8A0;
+  --pink:    #E05C7A;
+  --amber:   #F0A500;
+  --white:   #F5F2FF;
+  --muted:   #B8B4CC;
+  --dim:     #706C88;
+  --border:  rgba(108,99,255,0.18);
+  --glow:    rgba(108,99,255,0.12);
+  --radius:  14px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Grid overlay */
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background-image:
+    linear-gradient(rgba(108,99,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(108,99,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none; z-index:0;
+}
+
+/* ── LOGIN SCREEN ── */
+#login-screen {
+  position: fixed; inset:0;
+  display: flex; align-items:center; justify-content:center;
+  z-index: 100;
+  background: var(--bg);
+}
+
+.login-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 3rem 2.5rem;
+  width: 100%; max-width: 400px;
+  text-align: center;
+  box-shadow: 0 0 80px var(--glow);
+  animation: fadeUp 0.5s ease both;
+}
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(16px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.login-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.25rem;
+}
+.login-logo span { color: var(--violet); }
+
+.login-sub {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.68rem;
+  color: var(--teal);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1.5rem;
+  background: white;
+  color: #1a1a2e;
+  border: none;
+  border-radius: var(--radius);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.google-btn:hover { transform:translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+
+.google-icon { width:20px; height:20px; }
+
+.login-note {
+  margin-top: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+
+/* ── SIDEBAR ── */
+.app { display:none; min-height:100vh; }
+.app.visible { display:flex; }
+
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top:0; left:0; bottom:0;
+  z-index: 10;
+  padding: 1.5rem 0;
+}
+
+.sidebar-logo {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.3rem;
+  letter-spacing: -0.03em;
+  padding: 0 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1rem;
+}
+.sidebar-logo span { color: var(--violet); }
+.sidebar-logo small {
+  display: block;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-style: normal;
+  margin-top: 2px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  border-left: 2px solid transparent;
+  position: relative;
+}
+.nav-item:hover { color: var(--white); background: rgba(108,99,255,0.06); }
+.nav-item.active {
+  color: var(--white);
+  border-left-color: var(--violet);
+  background: rgba(108,99,255,0.1);
+}
+
+.nav-icon { font-size: 1rem; width: 18px; text-align:center; }
+
+.nav-badge {
+  margin-left: auto;
+  background: var(--pink);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 100px;
+  font-family: 'DM Mono', monospace;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.avatar {
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--violet), var(--teal));
+  display: flex; align-items:center; justify-content:center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.avatar img { width:100%; height:100%; object-fit:cover; }
+
+.logout-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: color 0.2s;
+}
+.logout-btn:hover { color: var(--pink); }
+
+/* ── MAIN CONTENT ── */
+.main {
+  margin-left: 220px;
+  flex: 1;
+  padding: 2rem 2.5rem;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+.page { display:none; }
+.page.active { display:block; animation: fadeUp 0.3s ease; }
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 1.75rem;
+  letter-spacing: -0.02em;
+}
+.page-title span { color: var(--teal); font-style: italic; }
+
+.page-meta {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+}
+
+/* ── STAT CARDS ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+}
+
+.stat-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--dim);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.stat-value.violet { color: var(--violet); }
+.stat-value.teal   { color: var(--teal); }
+.stat-value.pink   { color: var(--pink); }
+.stat-value.amber  { color: var(--amber); }
+
+/* ── TABLE / LIST ── */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.section-count {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.7rem;
+  color: var(--dim);
+}
+
+.refresh-btn {
+  background: rgba(108,99,255,0.12);
+  border: 1px solid var(--border);
+  color: var(--violet);
+  padding: 0.35rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.refresh-btn:hover { background: rgba(108,99,255,0.2); }
+
+/* Pending approval items */
+.approval-item {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+}
+.approval-item:last-child { border-bottom: none; }
+.approval-item:hover { background: rgba(108,99,255,0.04); }
+
+.approval-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 100px;
+}
+.tag-violet  { background: rgba(108,99,255,0.15); color: var(--violet); border: 1px solid rgba(108,99,255,0.3); }
+.tag-teal    { background: rgba(80,200,160,0.12); color: var(--teal);   border: 1px solid rgba(80,200,160,0.3); }
+.tag-pink    { background: rgba(224,92,122,0.12); color: var(--pink);   border: 1px solid rgba(224,92,122,0.3); }
+.tag-amber   { background: rgba(240,165,0,0.12);  color: var(--amber);  border: 1px solid rgba(240,165,0,0.3); }
+.tag-dim     { background: rgba(112,108,136,0.15);color: var(--muted);  border: 1px solid rgba(112,108,136,0.2); }
+
+.approval-source {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.approval-question {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.approval-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+}
+
+.option-chip {
+  font-size: 0.75rem;
+  color: var(--muted);
+  background: var(--card2);
+  border: 1px solid var(--border);
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+}
+
+.approval-context {
+  font-size: 0.8rem;
+  color: var(--dim);
+  font-style: italic;
+  background: rgba(255,255,255,0.03);
+  border-left: 2px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 6px 6px 0;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.approval-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-approve {
+  background: var(--teal);
+  color: var(--bg);
+  border: none;
+  padding: 0.5rem 1.1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-approve:hover { filter: brightness(1.1); transform: translateY(-1px); }
+.btn-approve:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+.btn-skip {
+  background: transparent;
+  color: var(--dim);
+  border: 1px solid rgba(112,108,136,0.3);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-skip:hover { color: var(--pink); border-color: rgba(224,92,122,0.4); }
+
+.btn-view {
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: var(--violet);
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+}
+.btn-view:hover { opacity:1; }
+
+/* Poll results bars */
+.poll-item {
+  padding: 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+.poll-item:last-child { border-bottom: none; }
+
+.poll-question {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  line-height: 1.4;
+}
+
+.poll-bars { display:flex; flex-direction:column; gap:0.5rem; margin-bottom:0.5rem; }
+
+.bar-row { display:flex; align-items:center; gap:0.75rem; }
+
+.bar-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  width: 130px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bar-track {
+  flex:1; height:6px;
+  background: rgba(255,255,255,0.06);
+  border-radius:100px; overflow:hidden;
+}
+
+.bar-fill {
+  height:100%; border-radius:100px;
+  background: var(--violet);
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+.bar-fill.winner { background: linear-gradient(90deg, var(--violet), var(--teal)); }
+
+.bar-pct {
+  font-family:'DM Mono', monospace;
+  font-size:0.7rem;
+  color: var(--muted);
+  width: 36px;
+  text-align:right;
+}
+
+.poll-footer {
+  display:flex; align-items:center; gap:1rem;
+  font-family:'DM Mono', monospace;
+  font-size:0.68rem; color:var(--dim);
+}
+
+/* Table */
+.data-table { width:100%; border-collapse:collapse; }
+
+.data-table th {
+  font-family:'DM Mono', monospace;
+  font-size:0.65rem;
+  color: var(--dim);
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  padding:0.75rem 1.25rem;
+  text-align:left;
+  border-bottom: 1px solid var(--border);
+  font-weight:500;
+}
+
+.data-table td {
+  padding:0.85rem 1.25rem;
+  font-size:0.85rem;
+  color:var(--muted);
+  border-bottom:1px solid rgba(108,99,255,0.07);
+  vertical-align:middle;
+}
+
+.data-table tr:last-child td { border-bottom:none; }
+.data-table tr:hover td { background:rgba(108,99,255,0.04); }
+
+.email-cell { color:var(--white); font-weight:500; }
+
+/* Log */
+.log-item {
+  display:flex; gap:1rem; align-items:flex-start;
+  padding:0.75rem 1.25rem;
+  border-bottom:1px solid rgba(108,99,255,0.06);
+  font-size:0.82rem;
+}
+.log-item:last-child { border-bottom:none; }
+
+.log-time {
+  font-family:'DM Mono', monospace;
+  font-size:0.68rem;
+  color:var(--dim);
+  white-space:nowrap;
+  padding-top:2px;
+  flex-shrink:0;
+}
+
+.log-msg { color:var(--muted); line-height:1.5; }
+.log-msg.info  { color:var(--muted); }
+.log-msg.error { color:var(--pink); }
+.log-msg.ok    { color:var(--teal); }
+
+/* Empty state */
+.empty {
+  text-align:center;
+  padding:3rem 1.5rem;
+  color:var(--dim);
+}
+.empty-icon { font-size:2rem; margin-bottom:0.75rem; opacity:0.4; }
+.empty-text { font-size:0.85rem; }
+
+/* Loading spinner */
+.spinner {
+  width:28px; height:28px;
+  border:2px solid var(--border);
+  border-top-color:var(--violet);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+  margin:2rem auto;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+.loading-wrap { text-align:center; padding:2rem; color:var(--dim); font-size:0.85rem; }
+
+/* Toast */
+.toast {
+  position:fixed;
+  bottom:1.5rem; right:1.5rem;
+  background:var(--card2);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:0.75rem 1.25rem;
+  font-size:0.85rem;
+  color:var(--white);
+  z-index:999;
+  transform:translateY(100px);
+  opacity:0;
+  transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.ok   { border-color:rgba(80,200,160,0.4); }
+.toast.err  { border-color:rgba(224,92,122,0.4); }
+
+/* Mobile sidebar toggle */
+.menu-toggle {
+  display:none;
+  position:fixed; top:1rem; left:1rem;
+  z-index:20;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:10px;
+  width:38px; height:38px;
+  align-items:center; justify-content:center;
+  cursor:pointer; font-size:1.1rem;
+}
+
+@media(max-width:768px) {
+  .sidebar { transform:translateX(-100%); transition:transform 0.3s; }
+  .sidebar.open { transform:translateX(0); }
+  .main { margin-left:0; padding:1.25rem; padding-top:4rem; }
+  .menu-toggle { display:flex; }
+  .stats-row { grid-template-columns:repeat(2,1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- Login Screen -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-logo">Un<span>Moot</span></div>
+    <div class="login-sub">Admin Dashboard</div>
+    <button class="google-btn" onclick="signInWithGoogle()">
+      <svg class="google-icon" viewBox="0 0 48 48">
+        <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+        <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+        <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.35-8.16 2.35-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+      </svg>
+      Continue with Google
+    </button>
+    <p class="login-note">Access restricted to authorized UnMoot accounts</p>
+  </div>
+</div>
+
+<!-- Mobile toggle -->
+<button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+<!-- App Shell -->
+<div class="app" id="app">
+
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      Un<span>Moot</span>
+      <small>Admin Console</small>
+    </div>
+
+    <nav>
+      <div class="nav-item active" onclick="showPage('approvals')" id="nav-approvals">
+        <span class="nav-icon">⏳</span> Pending Approvals
+        <span class="nav-badge" id="badge-approvals" style="display:none">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('polls')" id="nav-polls">
+        <span class="nav-icon">📊</span> Active Polls
+      </div>
+      <div class="nav-item" onclick="showPage('registrants')" id="nav-registrants">
+        <span class="nav-icon">✉️</span> Email Registrants
+      </div>
+      <div class="nav-item" onclick="showPage('early-access')" id="nav-early-access">
+        <span class="nav-icon">🔑</span> Early Access
+      </div>
+      <div class="nav-item" onclick="showPage('log')" id="nav-log">
+        <span class="nav-icon">📋</span> Bot Activity Log
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="avatar" id="user-avatar">?</div>
+        <span id="user-name" style="font-size:0.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100px;">Loading...</span>
+        <button class="logout-btn" onclick="signOut()">Out</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ── APPROVALS PAGE ── -->
+    <div class="page active" id="page-approvals">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Pending <span>Approvals</span></div>
+          <div class="page-meta" id="approvals-meta">Loading...</div>
+        </div>
+        <button class="refresh-btn" onclick="loadApprovals()">↻ Refresh</button>
+      </div>
+
+      <div class="stats-row" id="approvals-stats">
+        <div class="stat-card">
+          <div class="stat-label">Scan Candidates</div>
+          <div class="stat-value violet" id="stat-scan">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Mention Replies</div>
+          <div class="stat-value teal" id="stat-mentions">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Approved Today</div>
+          <div class="stat-value amber" id="stat-approved-today">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">🔍 High-Traffic Scan Candidates</div>
+          <span class="section-count" id="scan-count">—</span>
+        </div>
+        <div id="scan-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">💬 Mention Replies</div>
+          <span class="section-count" id="mention-count">—</span>
+        </div>
+        <div id="mention-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ── POLLS PAGE ── -->
+    <div class="page" id="page-polls">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Active <span>Polls</span></div>
+          <div class="page-meta" id="polls-meta">Loading...</div>
+        </div>
+        <button class="refresh-btn" onclick="loadPolls()">↻ Refresh</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Polls</div>
+          <div class="stat-value violet" id="stat-total-polls">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Total Votes</div>
+          <div class="stat-value teal" id="stat-total-votes">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Avg Votes / Poll</div>
+          <div class="stat-value amber" id="stat-avg-votes">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">📊 All Polls</div>
+          <span class="section-count" id="polls-count">—</span>
+        </div>
+        <div id="polls-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ── REGISTRANTS PAGE ── -->
+    <div class="page" id="page-registrants">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Email <span>Registrants</span></div>
+          <div class="page-meta" id="registrants-meta">Loading...</div>
+        </div>
+        <button class="refresh-btn" onclick="loadRegistrants()">↻ Refresh</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Emails</div>
+          <div class="stat-value violet" id="stat-total-emails">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">From X Widget</div>
+          <div class="stat-value teal" id="stat-emails-x">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">From Landing Page</div>
+          <div class="stat-value amber" id="stat-emails-web">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">✉️ All Registrants</div>
+          <span class="section-count" id="registrants-count">—</span>
+        </div>
+        <div id="registrants-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ── EARLY ACCESS PAGE ── -->
+    <div class="page" id="page-early-access">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Early <span>Access</span></div>
+          <div class="page-meta" id="early-meta">Loading...</div>
+        </div>
+        <button class="refresh-btn" onclick="loadEarlyAccess()">↻ Refresh</button>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total Requests</div>
+          <div class="stat-value violet" id="stat-early-total">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">This Week</div>
+          <div class="stat-value teal" id="stat-early-week">—</div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">🔑 Early Access Requests</div>
+          <span class="section-count" id="early-count">—</span>
+        </div>
+        <div id="early-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+    <!-- ── LOG PAGE ── -->
+    <div class="page" id="page-log">
+      <div class="page-header">
+        <div>
+          <div class="page-title">Bot Activity <span>Log</span></div>
+          <div class="page-meta" id="log-meta">Loading...</div>
+        </div>
+        <button class="refresh-btn" onclick="loadLog()">↻ Refresh</button>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">📋 Recent Activity</div>
+          <span class="section-count" id="log-count">—</span>
+        </div>
+        <div id="log-list"><div class="loading-wrap"><div class="spinner"></div></div></div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const SUPABASE_URL      = 'https://mrriqdjucenfcrykrlcs.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_viCur_nFYScxHve6dVGcow_pPNHlbT7';
+
+// Your Google OAuth Client ID — replace after setting up in Google Cloud Console
+const GOOGLE_CLIENT_ID  = '945129951408-0ogs0cq9lv9o0t70l7ug06d3l32a5i75.apps.googleusercontent.com ';
+
+// Only these emails can access the dashboard — add yours
+const ALLOWED_EMAILS    = ['joel@unmoot.app'];
+
+// Bot approval webhook URL — we'll set this up with a Supabase Edge Function
+const APPROVE_WEBHOOK   = 'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll';
+
+// ── SUPABASE CLIENT ───────────────────────────────────────────────────────────
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ── AUTH STATE ────────────────────────────────────────────────────────────────
+let currentUser = null;
+
+async function initAuth() {
+  // Check for existing session
+  const { data: { session } } = await sb.auth.getSession();
+  if (session?.user) {
+    handleUser(session.user);
+    return;
+  }
+
+  // Listen for auth changes (handles OAuth callback)
+  sb.auth.onAuthStateChange((event, session) => {
+    if (session?.user) {
+      handleUser(session.user);
+    } else {
+      showLogin();
+    }
+  });
+}
+
+function handleUser(user) {
+  const email = user.email?.toLowerCase();
+
+  // Check allowed emails
+  if (!ALLOWED_EMAILS.includes(email) && ALLOWED_EMAILS[0] !== 'info@unmoot.app') {
+    showToast('Access denied — unauthorized account', 'err');
+    sb.auth.signOut();
+    return;
+  }
+
+  currentUser = user;
+
+  // Update UI
+  const name   = user.user_metadata?.full_name || email;
+  const avatar = user.user_metadata?.avatar_url;
+
+  document.getElementById('user-name').textContent = name.split(' ')[0];
+  if (avatar) {
+    document.getElementById('user-avatar').innerHTML = `<img src="${avatar}" alt="">`;
+  } else {
+    document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+  }
+
+  // Show app
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app').classList.add('visible');
+
+  // Load initial data
+  loadApprovals();
+}
+
+function showLogin() {
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').classList.remove('visible');
+}
+
+async function signInWithGoogle() {
+  const { error } = await sb.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: window.location.origin + window.location.pathname,
+    }
+  });
+  if (error) showToast('Login failed: ' + error.message, 'err');
+}
+
+async function signOut() {
+  await sb.auth.signOut();
+  showLogin();
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+const pageLoaders = {
+  'approvals':    loadApprovals,
+  'polls':        loadPolls,
+  'registrants':  loadRegistrants,
+  'early-access': loadEarlyAccess,
+  'log':          loadLog,
+};
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (pageLoaders[name]) pageLoaders[name]();
+  if (window.innerWidth <= 768) closeSidebar();
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg, type = 'ok') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className   = 'toast show ' + type;
+  setTimeout(() => { el.className = 'toast ' + type; }, 3000);
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-US', { month:'short', day:'numeric' }) +
+         ' ' + d.toLocaleTimeString('en-US', { hour:'2-digit', minute:'2-digit' });
+}
+
+function fmtNum(n) {
+  return (n || 0).toLocaleString();
+}
+
+function ago(iso) {
+  if (!iso) return '—';
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1)   return 'just now';
+  if (m < 60)  return m + 'm ago';
+  const h = Math.floor(m / 60);
+  if (h < 24)  return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+
+// ── APPROVALS ─────────────────────────────────────────────────────────────────
+async function loadApprovals() {
+  document.getElementById('approvals-meta').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  // Load scan candidates
+  const { data: scans } = await sb
+    .from('scan_candidates')
+    .select('*')
+    .eq('poll_posted', false)
+    .order('likes', { ascending: false });
+
+  // Load pending mentions
+  const { data: mentions } = await sb
+    .from('mentions')
+    .select('*')
+    .eq('poll_posted', false)
+    .order('received_at', { ascending: false });
+
+  // Load approved today
+  const today = new Date().toISOString().slice(0, 10);
+  const { count: approvedToday } = await sb
+    .from('scan_candidates')
+    .select('*', { count: 'exact', head: true })
+    .eq('poll_posted', true)
+    .gte('scanned_at', today);
+
+  // Update stats
+  document.getElementById('stat-scan').textContent         = (scans || []).length;
+  document.getElementById('stat-mentions').textContent     = (mentions || []).length;
+  document.getElementById('stat-approved-today').textContent = approvedToday || 0;
+
+  const total = (scans || []).length + (mentions || []).length;
+  const badge = document.getElementById('badge-approvals');
+  if (total > 0) {
+    badge.textContent     = total;
+    badge.style.display   = 'inline';
+  } else {
+    badge.style.display   = 'none';
+  }
+
+  document.getElementById('scan-count').textContent    = (scans || []).length + ' pending';
+  document.getElementById('mention-count').textContent = (mentions || []).length + ' pending';
+
+  renderScanList(scans || []);
+  renderMentionList(mentions || []);
+}
+
+function renderScanList(items) {
+  const el = document.getElementById('scan-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No pending scan candidates</div></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(item => {
+    const opts = safeParseOptions(item.ai_options);
+    return `
+    <div class="approval-item" id="scan-item-${item.tweet_id}">
+      <div class="approval-meta">
+        <span class="tag tag-violet">${item.ai_topic || item.topic || 'Civic'}</span>
+        <span class="tag tag-dim">🔍 Scan</span>
+        <span class="approval-source">@${item.author} · ${fmtNum(item.likes)} likes · ${fmtNum(item.replies)} replies · ${ago(item.scanned_at)}</span>
+      </div>
+      <div class="approval-question">${item.ai_question || 'No AI poll generated'}</div>
+      ${opts.length ? `<div class="approval-options">${opts.map(o => `<span class="option-chip">${o}</span>`).join('')}</div>` : ''}
+      ${item.tweet_text ? `<div class="approval-context">"${item.tweet_text.slice(0, 200)}..."</div>` : ''}
+      <div class="approval-actions">
+        <button class="btn-approve" onclick="approveScan('${item.tweet_id}', this)">✓ Approve &amp; Post</button>
+        <button class="btn-skip"    onclick="skipScan('${item.tweet_id}', this)">Skip</button>
+        <a class="btn-view" href="${item.tweet_url}" target="_blank">View original ↗</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMentionList(items) {
+  const el = document.getElementById('mention-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No pending mention replies</div></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(item => {
+    const opts = safeParseOptions(item.ai_options);
+    return `
+    <div class="approval-item" id="mention-item-${item.mention_tweet_id}">
+      <div class="approval-meta">
+        <span class="tag tag-teal">${item.ai_topic || 'Civic'}</span>
+        <span class="tag tag-dim">💬 Mention</span>
+        <span class="approval-source">@${item.from_user} tagged @UnMootApp · ${ago(item.received_at)}</span>
+      </div>
+      <div class="approval-question">${item.ai_question || 'No AI poll generated'}</div>
+      ${opts.length ? `<div class="approval-options">${opts.map(o => `<span class="option-chip">${o}</span>`).join('')}</div>` : ''}
+      ${item.context_text ? `<div class="approval-context">"${item.context_text.slice(0, 200)}"</div>` : ''}
+      <div class="approval-actions">
+        <button class="btn-approve" onclick="approveMention('${item.mention_tweet_id}', this)">✓ Approve &amp; Post</button>
+        <button class="btn-skip"    onclick="skipMention('${item.mention_tweet_id}', this)">Skip</button>
+        <a class="btn-view" href="${item.tweet_url}" target="_blank">View mention ↗</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function safeParseOptions(json) {
+  try { return JSON.parse(json) || []; }
+  catch { return []; }
+}
+
+async function approveScan(tweetId, btn) {
+  btn.disabled    = true;
+  btn.textContent = 'Posting...';
+
+  try {
+    // Call Supabase Edge Function to trigger bot approval
+    const res = await fetch(APPROVE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session?.access_token },
+      body: JSON.stringify({ type: 'scan', id: tweetId }),
+    });
+
+    if (res.ok) {
+      document.getElementById('scan-item-' + tweetId)?.remove();
+      showToast('Poll approved and posted!', 'ok');
+      await logActivity('Approved scan candidate ' + tweetId);
+      loadApprovals();
+    } else {
+      // Fallback: mark in Supabase directly, bot will pick it up
+      await sb.from('scan_candidates')
+        .update({ approved: true })
+        .eq('tweet_id', tweetId);
+      document.getElementById('scan-item-' + tweetId)?.remove();
+      showToast('Approved — bot will post shortly', 'ok');
+      loadApprovals();
+    }
+  } catch (e) {
+    showToast('Error: ' + e.message, 'err');
+    btn.disabled    = false;
+    btn.textContent = '✓ Approve & Post';
+  }
+}
+
+async function skipScan(tweetId, btn) {
+  btn.disabled = true;
+  await sb.from('scan_candidates').update({ poll_posted: true }).eq('tweet_id', tweetId);
+  document.getElementById('scan-item-' + tweetId)?.remove();
+  showToast('Skipped', 'ok');
+  loadApprovals();
+}
+
+async function approveMention(mentionId, btn) {
+  btn.disabled    = true;
+  btn.textContent = 'Posting...';
+
+  try {
+    const res = await fetch(APPROVE_WEBHOOK, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session?.access_token },
+      body: JSON.stringify({ type: 'mention', id: mentionId }),
+    });
+
+    if (res.ok) {
+      document.getElementById('mention-item-' + mentionId)?.remove();
+      showToast('Poll approved and posted!', 'ok');
+      loadApprovals();
+    } else {
+      await sb.from('mentions').update({ approved: true }).eq('mention_tweet_id', mentionId);
+      document.getElementById('mention-item-' + mentionId)?.remove();
+      showToast('Approved — bot will post shortly', 'ok');
+      loadApprovals();
+    }
+  } catch (e) {
+    showToast('Error: ' + e.message, 'err');
+    btn.disabled    = false;
+    btn.textContent = '✓ Approve & Post';
+  }
+}
+
+async function skipMention(mentionId, btn) {
+  btn.disabled = true;
+  await sb.from('mentions').update({ poll_posted: true }).eq('mention_tweet_id', mentionId);
+  document.getElementById('mention-item-' + mentionId)?.remove();
+  showToast('Skipped', 'ok');
+  loadApprovals();
+}
+
+// ── POLLS ─────────────────────────────────────────────────────────────────────
+async function loadPolls() {
+  document.getElementById('polls-meta').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  const { data: polls } = await sb
+    .from('polls')
+    .select('*')
+    .order('posted_at', { ascending: false })
+    .limit(50);
+
+  const items      = polls || [];
+  const totalVotes = items.reduce((s, p) => s + (p.votes_total || 0), 0);
+  const avg        = items.length ? Math.round(totalVotes / items.length) : 0;
+
+  document.getElementById('stat-total-polls').textContent = items.length;
+  document.getElementById('stat-total-votes').textContent = fmtNum(totalVotes);
+  document.getElementById('stat-avg-votes').textContent   = fmtNum(avg);
+  document.getElementById('polls-count').textContent      = items.length + ' polls';
+
+  const el = document.getElementById('polls-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📊</div><div class="empty-text">No polls yet</div></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(poll => {
+    const opts = [
+      { label: poll.option_1_label, votes: poll.option_1_votes || 0 },
+      { label: poll.option_2_label, votes: poll.option_2_votes || 0 },
+      { label: poll.option_3_label, votes: poll.option_3_votes || 0 },
+      { label: poll.option_4_label, votes: poll.option_4_votes || 0 },
+    ].filter(o => o.label);
+
+    const total   = opts.reduce((s, o) => s + o.votes, 0);
+    const maxV    = Math.max(...opts.map(o => o.votes), 1);
+
+    const bars = opts.map(o => {
+      const pct   = total > 0 ? Math.round(o.votes / total * 100) : 0;
+      const isWin = o.votes === maxV && o.votes > 0;
+      return `<div class="bar-row">
+        <div class="bar-label">${o.label}</div>
+        <div class="bar-track"><div class="bar-fill ${isWin ? 'winner' : ''}" style="width:${pct}%"></div></div>
+        <div class="bar-pct">${pct}%</div>
+      </div>`;
+    }).join('');
+
+    const tweetUrl = poll.tweet_id
+      ? `https://x.com/UnMootApp/status/${poll.tweet_id}` : '#';
+
+    return `<div class="poll-item">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:0.6rem;">
+        <div>
+          <span class="tag tag-violet" style="margin-right:0.5rem;">${poll.topic || '—'}</span>
+          ${poll.reply_to ? '<span class="tag tag-dim">Reply</span>' : '<span class="tag tag-teal">Standalone</span>'}
+        </div>
+        <span style="font-family:DM Mono,monospace;font-size:0.68rem;color:var(--dim);white-space:nowrap;">${ago(poll.posted_at)}</span>
+      </div>
+      <div class="poll-question">${poll.question}</div>
+      <div class="poll-bars">${bars}</div>
+      <div class="poll-footer">
+        <span>${fmtNum(total)} votes</span>
+        <a href="${tweetUrl}" target="_blank" style="color:var(--violet);text-decoration:none;">View on X ↗</a>
+        ${poll.results_url ? `<a href="${poll.results_url}" target="_blank" style="color:var(--teal);text-decoration:none;">Results page ↗</a>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── REGISTRANTS ───────────────────────────────────────────────────────────────
+async function loadRegistrants() {
+  document.getElementById('registrants-meta').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  const { data: voters } = await sb
+    .from('poll_voters')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  // Also pull from waitlist table (landing page signups)
+  const { data: waitlist } = await sb
+    .from('waitlist')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  const allEmails = [
+    ...(voters || []).map(v => ({ ...v, source: v.source || 'x_widget' })),
+    ...(waitlist || []).map(w => ({ email: w.email, source: 'landing_page', created_at: w.created_at })),
+  ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+  const fromX   = allEmails.filter(e => e.source !== 'landing_page').length;
+  const fromWeb = allEmails.filter(e => e.source === 'landing_page').length;
+
+  document.getElementById('stat-total-emails').textContent = allEmails.length;
+  document.getElementById('stat-emails-x').textContent     = fromX;
+  document.getElementById('stat-emails-web').textContent   = fromWeb;
+  document.getElementById('registrants-count').textContent = allEmails.length + ' registrants';
+
+  const el = document.getElementById('registrants-list');
+  if (!allEmails.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">✉️</div><div class="empty-text">No registrants yet</div></div>';
+    return;
+  }
+
+  el.innerHTML = `<table class="data-table">
+    <thead><tr>
+      <th>Email</th>
+      <th>Source</th>
+      <th>Registered</th>
+    </tr></thead>
+    <tbody>
+    ${allEmails.map(r => `<tr>
+      <td class="email-cell">${r.email || '—'}</td>
+      <td>${sourceTag(r.source)}</td>
+      <td style="font-family:DM Mono,monospace;font-size:0.75rem;">${fmtDate(r.created_at)}</td>
+    </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function sourceTag(source) {
+  if (source === 'landing_page')  return '<span class="tag tag-violet">Landing Page</span>';
+  if (source === 'results_page')  return '<span class="tag tag-teal">X Widget</span>';
+  if (source === 'early_access')  return '<span class="tag tag-amber">Early Access</span>';
+  return `<span class="tag tag-dim">${source || 'unknown'}</span>`;
+}
+
+// ── EARLY ACCESS ──────────────────────────────────────────────────────────────
+async function loadEarlyAccess() {
+  document.getElementById('early-meta').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  const { data: requests } = await sb
+    .from('early_access')
+    .select('*')
+    .order('created_at', { ascending: false });
+
+  const items = requests || [];
+  const week  = new Date(Date.now() - 7 * 86400000).toISOString();
+  const thisWeek = items.filter(r => r.created_at > week).length;
+
+  document.getElementById('stat-early-total').textContent = items.length;
+  document.getElementById('stat-early-week').textContent  = thisWeek;
+  document.getElementById('early-count').textContent      = items.length + ' requests';
+
+  const el = document.getElementById('early-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🔑</div><div class="empty-text">No early access requests yet</div></div>';
+    return;
+  }
+
+  el.innerHTML = `<table class="data-table">
+    <thead><tr>
+      <th>Name</th>
+      <th>Org</th>
+      <th>Email</th>
+      <th>Message</th>
+      <th>Date</th>
+    </tr></thead>
+    <tbody>
+    ${items.map(r => `<tr>
+      <td class="email-cell">${r.name || '—'}</td>
+      <td>${r.org || '—'}</td>
+      <td style="color:var(--violet);">${r.email || '—'}</td>
+      <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${(r.message||'').replace(/"/g,"'")}">
+        ${r.message ? r.message.slice(0, 60) + (r.message.length > 60 ? '...' : '') : '—'}
+      </td>
+      <td style="font-family:DM Mono,monospace;font-size:0.75rem;white-space:nowrap;">${fmtDate(r.created_at)}</td>
+    </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// ── BOT LOG ───────────────────────────────────────────────────────────────────
+async function loadLog() {
+  document.getElementById('log-meta').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  const { data: logs } = await sb
+    .from('bot_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  const items = logs || [];
+  document.getElementById('log-count').textContent = items.length + ' entries';
+
+  const el = document.getElementById('log-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div><div class="empty-text">No log entries yet</div></div>';
+    return;
+  }
+
+  el.innerHTML = items.map(entry => {
+    const level = (entry.level || 'info').toLowerCase();
+    const cls   = level === 'error' ? 'error' : level === 'ok' ? 'ok' : 'info';
+    return `<div class="log-item">
+      <div class="log-time">${fmtDate(entry.created_at)}</div>
+      <div class="log-msg ${cls}">${entry.message || '—'}</div>
+    </div>`;
+  }).join('');
+}
+
+async function logActivity(message, level = 'ok') {
+  try {
+    await sb.from('bot_log').insert({
+      message,
+      level,
+      source:     'dashboard',
+      created_at: new Date().toISOString(),
+    });
+  } catch (e) { /* non-critical */ }
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+initAuth();
+</script>
+</body>
+</html>
