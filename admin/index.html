@@ -863,7 +863,7 @@ const SUPABASE_URL      = 'https://mrriqdjucenfcrykrlcs.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_viCur_nFYScxHve6dVGcow_pPNHlbT7';
 
 // Your Google OAuth Client ID — replace after setting up in Google Cloud Console
-const GOOGLE_CLIENT_ID  = '945129951408-0ogs0cq9lv9o0t70l7ug06d3l32a5i75.apps.googleusercontent.com ';
+const GOOGLE_CLIENT_ID  = '945129951408-0ogs0cq9lv9o0t70l7ug06d3l32a5i75.apps.googleusercontent.com';
 
 // Only these emails can access the dashboard — add yours
 const ALLOWED_EMAILS    = ['joel@unmoot.app'];
@@ -935,7 +935,7 @@ async function signInWithGoogle() {
   const { error } = await sb.auth.signInWithOAuth({
     provider: 'google',
     options: {
-      redirectTo: window.location.origin + window.location.pathname,
+      redirectTo: 'https://admin.unmoot.app',
     }
   });
   if (error) showToast('Login failed: ' + error.message, 'err');
