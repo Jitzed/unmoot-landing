@@ -342,6 +342,22 @@ body::before {
 }
 .refresh-btn:hover { background: rgba(108,99,255,0.2); }
 
+.scan-now-btn {
+  background: linear-gradient(135deg, var(--violet), var(--teal));
+  border: none;
+  color: white;
+  padding: 0.35rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
+}
+.scan-now-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.scan-now-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: none; }
+
 /* Pending approval items */
 .approval-item {
   padding: 1.25rem;
@@ -699,7 +715,10 @@ body::before {
           <div class="page-title">Pending <span>Approvals</span></div>
           <div class="page-meta" id="approvals-meta">Loading...</div>
         </div>
-        <button class="refresh-btn" onclick="loadApprovals()">↻ Refresh</button>
+        <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+          <button class="refresh-btn" onclick="loadApprovals()">↻ Refresh</button>
+          <button class="scan-now-btn" id="scan-now-btn" onclick="triggerScan()">⚡ Run Scan Now</button>
+        </div>
       </div>
 
       <div class="stats-row" id="approvals-stats">
@@ -863,10 +882,10 @@ const SUPABASE_URL      = 'https://mrriqdjucenfcrykrlcs.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_viCur_nFYScxHve6dVGcow_pPNHlbT7';
 
 // Your Google OAuth Client ID — replace after setting up in Google Cloud Console
-const GOOGLE_CLIENT_ID  = '945129951408-0ogs0cq9lv9o0t70l7ug06d3l32a5i75.apps.googleusercontent.com';
+const GOOGLE_CLIENT_ID  = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
 
 // Only these emails can access the dashboard — add yours
-const ALLOWED_EMAILS    = ['joel@unmoot.app'];
+const ALLOWED_EMAILS    = ['info@unmoot.app'];
 
 // Bot approval webhook URL — we'll set this up with a Supabase Edge Function
 const APPROVE_WEBHOOK   = 'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll';
@@ -1397,6 +1416,52 @@ async function logActivity(message, level = 'ok') {
       created_at: new Date().toISOString(),
     });
   } catch (e) { /* non-critical */ }
+}
+
+// ── TRIGGER SCAN ─────────────────────────────────────────────────────────────
+async function triggerScan() {
+  const btn = document.getElementById('scan-now-btn');
+  btn.disabled    = true;
+  btn.textContent = '⏳ Scanning...';
+
+  try {
+    // Write a scan_request to Supabase — bot picks it up within 2 minutes
+    const { error } = await sb.from('scan_requests').insert({
+      requested_by: currentUser?.email || 'dashboard',
+      status:       'pending',
+      created_at:   new Date().toISOString(),
+    });
+
+    if (error) throw error;
+
+    showToast('Scan triggered! Results will appear here within 2 minutes.', 'ok');
+    await logActivity('Manual scan triggered from dashboard', 'ok');
+
+    // Poll for new results every 15 seconds for up to 3 minutes
+    let attempts = 0;
+    const poll = setInterval(async () => {
+      attempts++;
+      await loadApprovals();
+
+      if (attempts >= 12) {
+        clearInterval(poll);
+        btn.disabled    = false;
+        btn.textContent = '⚡ Run Scan Now';
+      }
+    }, 15000);
+
+    // Re-enable button after 3 minutes regardless
+    setTimeout(() => {
+      clearInterval(poll);
+      btn.disabled    = false;
+      btn.textContent = '⚡ Run Scan Now';
+    }, 180000);
+
+  } catch (e) {
+    showToast('Failed to trigger scan: ' + e.message, 'err');
+    btn.disabled    = false;
+    btn.textContent = '⚡ Run Scan Now';
+  }
 }
 
 // ── INIT ──────────────────────────────────────────────────────────────────────
