@@ -1132,7 +1132,7 @@ function renderMentionList(items) {
       ${opts.length ? `<div class="approval-options">${opts.map(o => `<span class="option-chip">${o}</span>`).join('')}</div>` : ''}
       ${item.context_text ? `<div class="approval-context">"${item.context_text.slice(0, 200)}"</div>` : ''}
       <div class="approval-actions">
-        <button class="btn-approve" onclick="approveMention('${item.mention_tweet_id}', this)">↗ Open &amp; Tag to Approve</button>
+        <button class="btn-approve" onclick="approveMention('${item.mention_tweet_id}', this)">✓ Approve &amp; Post</button>
         <button class="btn-skip"    onclick="skipMention('${item.mention_tweet_id}', this)">Skip</button>
         <a class="btn-view" href="${item.tweet_url}" target="_blank">View mention ↗</a>
       </div>
@@ -1175,23 +1175,38 @@ async function skipScan(tweetId, btn) {
 }
 
 async function approveMention(mentionId, btn) {
-  const { data } = await sb
-    .from('mentions')
-    .select('tweet_url, from_user, parent_url')
-    .eq('mention_tweet_id', mentionId)
-    .single();
+  btn.disabled    = true;
+  btn.textContent = '⏳ Posting...';
 
-  // Open parent tweet if available, otherwise the mention itself
-  const urlToOpen = data?.parent_url || data?.tweet_url;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
 
-  if (!urlToOpen) {
-    showToast('Could not find tweet URL', 'err');
-    return;
+    const res = await fetch(
+      'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll',
+      {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({ mention_id: mentionId }),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Approval failed');
+
+    document.getElementById('mention-item-' + mentionId)?.remove();
+    showToast('Poll posted! ' + (data.poll_url || ''), 'ok');
+    await logActivity('Approved mention poll: ' + (data.poll_url || mentionId), 'ok');
+    loadApprovals();
+
+  } catch(e) {
+    showToast('Error: ' + e.message, 'err');
+    btn.disabled    = false;
+    btn.textContent = '✓ Approve & Post';
   }
-
-  window.open(urlToOpen, '_blank');
-  showToast('Tweet opened — reply with @UnMootApp to post the poll', 'ok');
-  await logActivity('Opened mention tweet for approval from @' + data?.from_user);
 }
 
 async function skipMention(mentionId, btn) {
