@@ -358,6 +358,21 @@ body::before {
 .scan-now-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
 .scan-now-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; filter: none; }
 
+.check-mentions-btn {
+  background: rgba(80,200,160,0.15);
+  border: 1px solid rgba(80,200,160,0.4);
+  color: var(--teal);
+  padding: 0.35rem 0.9rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.check-mentions-btn:hover { background: rgba(80,200,160,0.25); transform: translateY(-1px); }
+.check-mentions-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
 /* Pending approval items */
 .approval-item {
   padding: 1.25rem;
@@ -718,6 +733,7 @@ body::before {
         <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
           <button class="refresh-btn" onclick="loadApprovals()">↻ Refresh</button>
           <button class="scan-now-btn" id="scan-now-btn" onclick="triggerScan()">⚡ Run Scan Now</button>
+          <button class="check-mentions-btn" id="check-mentions-btn" onclick="triggerCheckMentions()">🔔 Force Check Mentions</button>
         </div>
       </div>
 
@@ -1444,6 +1460,47 @@ async function triggerScan() {
   } finally {
     btn.disabled    = false;
     btn.textContent = '⚡ Run Scan Now';
+  }
+}
+
+// ── TRIGGER CHECK MENTIONS ───────────────────────────────────────────────────
+async function triggerCheckMentions() {
+  const btn = document.getElementById('check-mentions-btn');
+  btn.disabled    = true;
+  btn.textContent = '⏳ Checking...';
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    const res = await fetch(
+      'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/check-mentions',
+      {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({}),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Check failed');
+
+    if (data.processed > 0) {
+      showToast(data.message + ' — reloading...', 'ok');
+      setTimeout(() => loadApprovals(), 1000);
+    } else {
+      showToast('No new mentions found', 'ok');
+    }
+
+  } catch (e) {
+    console.error('Check mentions error:', e);
+    showToast('Error: ' + e.message, 'err');
+  } finally {
+    btn.disabled    = false;
+    btn.textContent = '🔔 Force Check Mentions';
   }
 }
 
