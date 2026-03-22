@@ -479,6 +479,24 @@ body::before {
 }
 .btn-skip:hover { color: var(--pink); border-color: rgba(224,92,122,0.4); }
 
+.btn-open {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: rgba(108,99,255,0.12);
+  border: 1px solid rgba(108,99,255,0.3);
+  color: var(--violet);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-open:hover { background: rgba(108,99,255,0.2); transform: translateY(-1px); }
+
 .btn-view {
   margin-left: auto;
   font-size: 0.75rem;
@@ -733,7 +751,7 @@ body::before {
         <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
           <button class="refresh-btn" onclick="loadApprovals()">↻ Refresh</button>
           <button class="scan-now-btn" id="scan-now-btn" onclick="triggerScan()">⚡ Run Scan Now</button>
-          <button class="check-mentions-btn" id="check-mentions-btn" onclick="triggerCheckMentions()">🔔 Force Check Mentions</button>
+          <button class="check-mentions-btn" id="check-mentions-btn" onclick="triggerCheckMentions()">🔔 Check Mentions</button>
         </div>
       </div>
 
@@ -1145,25 +1163,50 @@ function safeParseOptions(json) {
   catch { return []; }
 }
 
-async function approveScan(tweetId, btn) {
-  // Get the tweet URL for this candidate
-  const { data } = await sb
-    .from('scan_candidates')
-    .select('tweet_url, author')
-    .eq('tweet_id', tweetId)
-    .single();
-
-  if (!data?.tweet_url) {
-    showToast('Could not find tweet URL', 'err');
-    return;
+function markOpened(tweetId) {
+  // Visual indicator that the post has been opened
+  const btn = document.querySelector(`[onclick="approveScan('${tweetId}', this)"]`);
+  if (btn) {
+    btn.style.background = 'var(--teal)';
+    btn.style.color = 'var(--bg)';
+    btn.textContent = '▶ Post Poll Now';
   }
+}
 
-  // Open the original tweet in a new tab
-  // From there, reply with @UnMootApp to trigger auto-approval
-  window.open(data.tweet_url, '_blank');
+async function approveScan(tweetId, btn) {
+  btn.disabled    = true;
+  btn.textContent = '⏳ Posting...';
 
-  showToast('Tweet opened — reply with @UnMootApp to post the poll', 'ok');
-  await logActivity('Opened tweet for manual approval: @' + data.author);
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) throw new Error('Not authenticated');
+
+    // Call approve-poll Edge Function with the scan candidate tweet_id
+    const res = await fetch(
+      'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll',
+      {
+        method:  'POST',
+        headers: {
+          'Content-Type':  'application/json',
+          'Authorization': 'Bearer ' + session.access_token,
+        },
+        body: JSON.stringify({ tweet_id: tweetId, type: 'scan' }),
+      }
+    );
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Post failed');
+
+    document.getElementById('scan-item-' + tweetId)?.remove();
+    showToast('Poll posted! ' + (data.poll_url || ''), 'ok');
+    await logActivity('Posted scan poll: ' + (data.poll_url || tweetId), 'ok');
+    loadApprovals();
+
+  } catch(e) {
+    showToast('Error: ' + e.message, 'err');
+    btn.disabled    = false;
+    btn.textContent = '▶ Post Poll Now';
+  }
 }
 
 async function skipScan(tweetId, btn) {
@@ -1515,7 +1558,7 @@ async function triggerCheckMentions() {
     showToast('Error: ' + e.message, 'err');
   } finally {
     btn.disabled    = false;
-    btn.textContent = '🔔 Force Check Mentions';
+    btn.textContent = '🔔 Check Mentions';
   }
 }
 
