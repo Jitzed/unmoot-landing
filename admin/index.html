@@ -1088,7 +1088,7 @@ function renderScanList(items) {
       ${opts.length ? `<div class="approval-options">${opts.map(o => `<span class="option-chip">${o}</span>`).join('')}</div>` : ''}
       ${item.tweet_text ? `<div class="approval-context">"${item.tweet_text.slice(0, 200)}..."</div>` : ''}
       <div class="approval-actions">
-        <button class="btn-approve" onclick="approveScan('${item.tweet_id}', this)">✓ Approve &amp; Post</button>
+        <button class="btn-approve" onclick="approveScan('${item.tweet_id}', this)">↗ Open &amp; Tag to Approve</button>
         <button class="btn-skip"    onclick="skipScan('${item.tweet_id}', this)">Skip</button>
         <a class="btn-view" href="${item.tweet_url}" target="_blank">View original ↗</a>
       </div>
@@ -1116,7 +1116,7 @@ function renderMentionList(items) {
       ${opts.length ? `<div class="approval-options">${opts.map(o => `<span class="option-chip">${o}</span>`).join('')}</div>` : ''}
       ${item.context_text ? `<div class="approval-context">"${item.context_text.slice(0, 200)}"</div>` : ''}
       <div class="approval-actions">
-        <button class="btn-approve" onclick="approveMention('${item.mention_tweet_id}', this)">✓ Approve &amp; Post</button>
+        <button class="btn-approve" onclick="approveMention('${item.mention_tweet_id}', this)">↗ Open &amp; Tag to Approve</button>
         <button class="btn-skip"    onclick="skipMention('${item.mention_tweet_id}', this)">Skip</button>
         <a class="btn-view" href="${item.tweet_url}" target="_blank">View mention ↗</a>
       </div>
@@ -1130,37 +1130,24 @@ function safeParseOptions(json) {
 }
 
 async function approveScan(tweetId, btn) {
-  btn.disabled    = true;
-  btn.textContent = 'Posting...';
+  // Get the tweet URL for this candidate
+  const { data } = await sb
+    .from('scan_candidates')
+    .select('tweet_url, author')
+    .eq('tweet_id', tweetId)
+    .single();
 
-  try {
-    // Call Supabase Edge Function to trigger bot approval
-    const res = await fetch(APPROVE_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json',
-                 'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session?.access_token },
-      body: JSON.stringify({ type: 'scan', id: tweetId }),
-    });
-
-    if (res.ok) {
-      document.getElementById('scan-item-' + tweetId)?.remove();
-      showToast('Poll approved and posted!', 'ok');
-      await logActivity('Approved scan candidate ' + tweetId);
-      loadApprovals();
-    } else {
-      // Fallback: mark in Supabase directly, bot will pick it up
-      await sb.from('scan_candidates')
-        .update({ approved: true })
-        .eq('tweet_id', tweetId);
-      document.getElementById('scan-item-' + tweetId)?.remove();
-      showToast('Approved — bot will post shortly', 'ok');
-      loadApprovals();
-    }
-  } catch (e) {
-    showToast('Error: ' + e.message, 'err');
-    btn.disabled    = false;
-    btn.textContent = '✓ Approve & Post';
+  if (!data?.tweet_url) {
+    showToast('Could not find tweet URL', 'err');
+    return;
   }
+
+  // Open the original tweet in a new tab
+  // From there, reply with @UnMootApp to trigger auto-approval
+  window.open(data.tweet_url, '_blank');
+
+  showToast('Tweet opened — reply with @UnMootApp to post the poll', 'ok');
+  await logActivity('Opened tweet for manual approval: @' + data.author);
 }
 
 async function skipScan(tweetId, btn) {
@@ -1172,32 +1159,23 @@ async function skipScan(tweetId, btn) {
 }
 
 async function approveMention(mentionId, btn) {
-  btn.disabled    = true;
-  btn.textContent = 'Posting...';
+  const { data } = await sb
+    .from('mentions')
+    .select('tweet_url, from_user, parent_url')
+    .eq('mention_tweet_id', mentionId)
+    .single();
 
-  try {
-    const res = await fetch(APPROVE_WEBHOOK, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json',
-                 'Authorization': 'Bearer ' + (await sb.auth.getSession()).data.session?.access_token },
-      body: JSON.stringify({ type: 'mention', id: mentionId }),
-    });
+  // Open parent tweet if available, otherwise the mention itself
+  const urlToOpen = data?.parent_url || data?.tweet_url;
 
-    if (res.ok) {
-      document.getElementById('mention-item-' + mentionId)?.remove();
-      showToast('Poll approved and posted!', 'ok');
-      loadApprovals();
-    } else {
-      await sb.from('mentions').update({ approved: true }).eq('mention_tweet_id', mentionId);
-      document.getElementById('mention-item-' + mentionId)?.remove();
-      showToast('Approved — bot will post shortly', 'ok');
-      loadApprovals();
-    }
-  } catch (e) {
-    showToast('Error: ' + e.message, 'err');
-    btn.disabled    = false;
-    btn.textContent = '✓ Approve & Post';
+  if (!urlToOpen) {
+    showToast('Could not find tweet URL', 'err');
+    return;
   }
+
+  window.open(urlToOpen, '_blank');
+  showToast('Tweet opened — reply with @UnMootApp to post the poll', 'ok');
+  await logActivity('Opened mention tweet for approval from @' + data?.from_user);
 }
 
 async function skipMention(mentionId, btn) {
