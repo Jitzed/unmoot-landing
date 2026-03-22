@@ -1164,13 +1164,16 @@ function safeParseOptions(json) {
 }
 
 function markOpened(tweetId) {
-  // Visual indicator that the post has been opened
-  const btn = document.querySelector(`[onclick="approveScan('${tweetId}', this)"]`);
-  if (btn) {
-    btn.style.background = 'var(--teal)';
-    btn.style.color = 'var(--bg)';
-    btn.textContent = '▶ Post Poll Now';
-  }
+  // Enable and highlight the Post Poll button after opening the tweet
+  setTimeout(() => {
+    const btn = document.getElementById('post-btn-' + tweetId);
+    if (btn) {
+      btn.style.opacity = '1';
+      btn.style.background = 'var(--teal)';
+      btn.style.color = 'var(--bg)';
+      btn.title = 'Click to post the poll in the thread';
+    }
+  }, 500);
 }
 
 async function approveScan(tweetId, btn) {
