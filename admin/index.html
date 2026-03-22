@@ -1207,44 +1207,42 @@ function safeParseOptions(json) {
   catch { return []; }
 }
 
-function copyReplyText(tweetId) {
+function copyReplyText(tweetId, btnEl) {
   const text = "What do verified constituents actually think about this? 🗳️ Poll below...";
   navigator.clipboard.writeText(text).then(() => {
-    const btn = document.querySelector(`[onclick*="copyReplyText('${tweetId}')"]`);
-    const copyBtn = document.querySelector(`.reply-copy-btn[onclick="copyReplyText('${tweetId}')"]`);
-    if (copyBtn) {
-      copyBtn.textContent = '✓ Copied!';
-      copyBtn.classList.add('copied');
-      setTimeout(() => {
-        copyBtn.textContent = 'Copy';
-        copyBtn.classList.remove('copied');
-      }, 2000);
+    if (btnEl) {
+      btnEl.textContent = '✓ Copied!';
+      btnEl.classList.add('copied');
+      setTimeout(() => { btnEl.textContent = 'Copy'; btnEl.classList.remove('copied'); }, 2000);
     }
-  }).catch(() => {
-    // Fallback for browsers that don't support clipboard API
-    const el = document.getElementById('reply-text-' + tweetId);
-    if (el) {
-      const range = document.createRange();
-      range.selectNode(el);
-      window.getSelection().removeAllRanges();
-      window.getSelection().addRange(range);
-      document.execCommand('copy');
-      window.getSelection().removeAllRanges();
+  }).catch(() => {});
+}
+
+function openAndMark(tweetId, tweetUrl) {
+  // Copy reply text to clipboard
+  const text = "What do verified constituents actually think about this? 🗳️ Poll below...";
+  navigator.clipboard.writeText(text).catch(() => {});
+
+  // Open tweet in new tab
+  window.open(tweetUrl, '_blank');
+
+  // Enable and highlight the Post Poll button
+  setTimeout(() => {
+    const postBtn = document.getElementById('post-btn-' + tweetId);
+    if (postBtn) {
+      postBtn.disabled = false;
+      postBtn.style.opacity = '1';
+      postBtn.style.background = 'var(--teal)';
+      postBtn.style.color = 'var(--bg)';
+      postBtn.title = 'Click after replying on X';
     }
-  });
+  }, 300);
+
+  showToast('Reply text copied! Paste it on X, then come back and click Post Poll.', 'ok');
 }
 
 function markOpened(tweetId) {
-  // Enable and highlight the Post Poll button after opening the tweet
-  setTimeout(() => {
-    const btn = document.getElementById('post-btn-' + tweetId);
-    if (btn) {
-      btn.style.opacity = '1';
-      btn.style.background = 'var(--teal)';
-      btn.style.color = 'var(--bg)';
-      btn.title = 'Click to post the poll in the thread';
-    }
-  }, 500);
+  // Legacy -- now handled by openAndMark
 }
 
 async function approveScan(tweetId, btn) {
