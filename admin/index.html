@@ -479,6 +479,50 @@ body::before {
 }
 .btn-skip:hover { color: var(--pink); border-color: rgba(224,92,122,0.4); }
 
+.reply-prompt {
+  background: rgba(80,200,160,0.06);
+  border: 1px solid rgba(80,200,160,0.2);
+  border-radius: 10px;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reply-prompt-label {
+  font-size: 0.72rem;
+  color: var(--teal);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.reply-prompt-text {
+  flex: 1;
+  font-size: 0.82rem;
+  color: var(--muted);
+  font-style: italic;
+  min-width: 200px;
+}
+
+.reply-copy-btn {
+  background: rgba(80,200,160,0.15);
+  border: 1px solid rgba(80,200,160,0.3);
+  color: var(--teal);
+  padding: 0.3rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.reply-copy-btn:hover { background: rgba(80,200,160,0.25); }
+.reply-copy-btn.copied { background: var(--teal); color: var(--bg); }
+
 .btn-open {
   display: inline-flex;
   align-items: center;
@@ -1161,6 +1205,33 @@ function renderMentionList(items) {
 function safeParseOptions(json) {
   try { return JSON.parse(json) || []; }
   catch { return []; }
+}
+
+function copyReplyText(tweetId) {
+  const text = "What do verified constituents actually think about this? 🗳️ Poll below...";
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector(`[onclick*="copyReplyText('${tweetId}')"]`);
+    const copyBtn = document.querySelector(`.reply-copy-btn[onclick="copyReplyText('${tweetId}')"]`);
+    if (copyBtn) {
+      copyBtn.textContent = '✓ Copied!';
+      copyBtn.classList.add('copied');
+      setTimeout(() => {
+        copyBtn.textContent = 'Copy';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    }
+  }).catch(() => {
+    // Fallback for browsers that don't support clipboard API
+    const el = document.getElementById('reply-text-' + tweetId);
+    if (el) {
+      const range = document.createRange();
+      range.selectNode(el);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+      document.execCommand('copy');
+      window.getSelection().removeAllRanges();
+    }
+  });
 }
 
 function markOpened(tweetId) {
