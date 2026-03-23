@@ -1192,8 +1192,8 @@ function renderScanList(items) {
       ${item.tweet_text ? `<div class="approval-context">"${item.tweet_text.slice(0, 200)}..."</div>` : ''}
       <div class="reply-prompt">
         <span class="reply-prompt-label">📋 Step 1 — Copy &amp; paste this as your reply on X:</span>
-        <span class="reply-prompt-text">What do verified constituents actually think about this? 🗳️ Poll below...</span>
-        <button class="reply-copy-btn" onclick="event.stopPropagation(); copyReplyText(this)">Copy</button>
+        <span class="reply-prompt-text">${item.ai_intro ? item.ai_intro.replace(/—$/, '').trim() + ' — civic poll below 🗳️' : 'Civic poll: weigh in below 🗳️'}</span>
+        <button class="reply-copy-btn" onclick="event.stopPropagation(); copyReplyText(this, '${item.ai_intro ? item.ai_intro.replace(/—$/, '').trim() + ' — civic poll below 🗳️' : 'Civic poll: weigh in below 🗳️'}')">Copy</button>
       </div>
       <div class="reply-url-row">
         <span class="reply-prompt-label">📎 Step 2 — Paste your reply URL here:</span>
@@ -1241,8 +1241,8 @@ function safeParseOptions(json) {
   catch { return []; }
 }
 
-function copyReplyText(btnEl) {
-  const text = "What do verified constituents actually think about this? 🗳️ Poll below...";
+function copyReplyText(btnEl, customText) {
+  const text = customText || 'Civic poll: weigh in below 🗳️';
   navigator.clipboard.writeText(text).then(() => {
     if (btnEl) {
       btnEl.textContent = '✓ Copied!';
@@ -1273,9 +1273,11 @@ function onReplyUrlInput(tweetId) {
 }
 
 function openAndMark(tweetId, tweetUrl) {
-  // Copy reply text to clipboard
-  const text = "What do verified constituents actually think about this? 🗳️ Poll below...";
-  navigator.clipboard.writeText(text).catch(() => {});
+  // Get the dynamic intro text from the copy button if available
+  const card     = document.getElementById('scan-item-' + tweetId);
+  const copyBtn  = card?.querySelector('.reply-copy-btn');
+  const introText = copyBtn?.getAttribute('onclick')?.match(/'([^']+)'\)$/)?.[1] || 'Civic poll: weigh in below 🗳️';
+  navigator.clipboard.writeText(introText).catch(() => {});
 
   // Open tweet in new tab
   window.open(tweetUrl, '_blank');
