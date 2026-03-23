@@ -1201,7 +1201,7 @@ function renderScanList(items) {
       </div>
       <div class="approval-actions">
         <button class="btn-open" onclick="openAndMark('${item.tweet_id}', '${item.tweet_url}')">↗ Open Post on X</button>
-        <button class="btn-approve" id="post-btn-${item.tweet_id}" onclick="approveScan('${item.tweet_id}', this)" disabled style="opacity:0.4;">▶ Post Poll as Reply</button>
+        <button class="btn-approve" id="post-btn-${item.tweet_id}" onclick="approveScan('${item.tweet_id}', this)">▶ Post Poll</button>
         <button class="btn-skip" onclick="skipScan('${item.tweet_id}', this)">Skip</button>
       </div>
     </div>`;
@@ -1311,9 +1311,9 @@ async function approveScan(tweetId, btn) {
     replyToId = replyUrl.split('/status/')[1].split('?')[0].trim();
   }
 
+  // replyToId is optional -- if not provided, posts standalone
   if (!replyToId) {
-    showToast('Please paste your reply URL in Step 2 first', 'err');
-    return;
+    console.log('No reply URL provided -- posting standalone');
   }
 
   btn.disabled    = true;
