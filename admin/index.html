@@ -991,7 +991,7 @@ const GOOGLE_CLIENT_ID  = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
 const ALLOWED_EMAILS    = ['info@unmoot.app'];
 
 // Bot approval webhook URL — we'll set this up with a Supabase Edge Function
-const APPROVE_WEBHOOK   = 'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll';
+const APPROVE_WEBHOOK   = 'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/test-post';
 
 // ── SUPABASE CLIENT ───────────────────────────────────────────────────────────
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1324,7 +1324,7 @@ async function approveScan(tweetId, btn) {
     if (!session) throw new Error('Not authenticated');
 
     const res = await fetch(
-      'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll',
+      'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/test-post',
       {
         method:  'POST',
         headers: {
@@ -1367,7 +1367,7 @@ async function approveMention(mentionId, btn) {
     if (!session) throw new Error('Not authenticated');
 
     const res = await fetch(
-      'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll',
+      'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/test-post',
       {
         method:  'POST',
         headers: {
