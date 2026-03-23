@@ -523,6 +523,31 @@ body::before {
 .reply-copy-btn:hover { background: rgba(80,200,160,0.25); }
 .reply-copy-btn.copied { background: var(--teal); color: var(--bg); }
 
+.reply-url-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reply-url-input {
+  flex: 1;
+  background: var(--deep);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 0.85rem;
+  color: var(--white);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  outline: none;
+  min-width: 200px;
+  transition: border-color 0.2s;
+}
+.reply-url-input:focus { border-color: var(--teal); }
+.reply-url-input::placeholder { color: var(--dim); font-size: 0.78rem; }
+.reply-url-input.valid { border-color: var(--teal); }
+
 .btn-open {
   display: inline-flex;
   align-items: center;
@@ -1166,13 +1191,17 @@ function renderScanList(items) {
       ${opts.length ? `<div class="approval-options">${opts.map(o => `<span class="option-chip">${o}</span>`).join('')}</div>` : ''}
       ${item.tweet_text ? `<div class="approval-context">"${item.tweet_text.slice(0, 200)}..."</div>` : ''}
       <div class="reply-prompt">
-        <span class="reply-prompt-label">📋 Reply text:</span>
+        <span class="reply-prompt-label">📋 Step 1 — Copy &amp; paste this as your reply on X:</span>
         <span class="reply-prompt-text">What do verified constituents actually think about this? 🗳️ Poll below...</span>
         <button class="reply-copy-btn" onclick="event.stopPropagation(); copyReplyText(this)">Copy</button>
       </div>
+      <div class="reply-url-row">
+        <span class="reply-prompt-label">📎 Step 2 — Paste your reply URL here:</span>
+        <input type="text" id="reply-url-${item.tweet_id}" placeholder="https://x.com/UnMootApp/status/..." class="reply-url-input" oninput="onReplyUrlInput('${item.tweet_id}')">
+      </div>
       <div class="approval-actions">
-        <button class="btn-open" onclick="openAndMark('${item.tweet_id}', '${item.tweet_url}')">↗ Step 1: Open Post on X</button>
-        <button class="btn-approve" id="post-btn-${item.tweet_id}" onclick="approveScan('${item.tweet_id}', this)" disabled style="opacity:0.4;">▶ Step 2: Post Poll</button>
+        <button class="btn-open" onclick="openAndMark('${item.tweet_id}', '${item.tweet_url}')">↗ Open Post on X</button>
+        <button class="btn-approve" id="post-btn-${item.tweet_id}" onclick="approveScan('${item.tweet_id}', this)" disabled style="opacity:0.4;">▶ Post Poll as Reply</button>
         <button class="btn-skip" onclick="skipScan('${item.tweet_id}', this)">Skip</button>
       </div>
     </div>`;
@@ -1223,6 +1252,26 @@ function copyReplyText(btnEl) {
   }).catch(() => {});
 }
 
+function onReplyUrlInput(tweetId) {
+  const input = document.getElementById('reply-url-' + tweetId);
+  const btn   = document.getElementById('post-btn-' + tweetId);
+  const val   = (input?.value || '').trim();
+  const valid = val.includes('x.com') && val.includes('/status/');
+
+  if (input) input.classList.toggle('valid', valid);
+  if (btn) {
+    btn.disabled      = !valid;
+    btn.style.opacity = valid ? '1' : '0.4';
+    if (valid) {
+      btn.style.background = 'var(--teal)';
+      btn.style.color      = 'var(--bg)';
+    } else {
+      btn.style.background = '';
+      btn.style.color      = '';
+    }
+  }
+}
+
 function openAndMark(tweetId, tweetUrl) {
   // Copy reply text to clipboard
   const text = "What do verified constituents actually think about this? 🗳️ Poll below...";
@@ -1251,6 +1300,20 @@ function markOpened(tweetId) {
 }
 
 async function approveScan(tweetId, btn) {
+  // Get reply URL from input -- extract tweet ID from it
+  const replyUrlInput = document.getElementById('reply-url-' + tweetId);
+  const replyUrl      = (replyUrlInput?.value || '').trim();
+  let   replyToId     = null;
+
+  if (replyUrl && replyUrl.includes('/status/')) {
+    replyToId = replyUrl.split('/status/')[1].split('?')[0].trim();
+  }
+
+  if (!replyToId) {
+    showToast('Please paste your reply URL in Step 2 first', 'err');
+    return;
+  }
+
   btn.disabled    = true;
   btn.textContent = '⏳ Posting...';
 
@@ -1258,7 +1321,6 @@ async function approveScan(tweetId, btn) {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) throw new Error('Not authenticated');
 
-    // Call approve-poll Edge Function with the scan candidate tweet_id
     const res = await fetch(
       'https://mrriqdjucenfcrykrlcs.supabase.co/functions/v1/approve-poll',
       {
@@ -1267,7 +1329,7 @@ async function approveScan(tweetId, btn) {
           'Content-Type':  'application/json',
           'Authorization': 'Bearer ' + session.access_token,
         },
-        body: JSON.stringify({ tweet_id: tweetId, type: 'scan' }),
+        body: JSON.stringify({ tweet_id: tweetId, type: 'scan', reply_to_id: replyToId }),
       }
     );
 
@@ -1275,14 +1337,14 @@ async function approveScan(tweetId, btn) {
     if (!res.ok) throw new Error(data.error || 'Post failed');
 
     document.getElementById('scan-item-' + tweetId)?.remove();
-    showToast('Poll posted! ' + (data.poll_url || ''), 'ok');
+    showToast('Poll posted as reply! ' + (data.poll_url || ''), 'ok');
     await logActivity('Posted scan poll: ' + (data.poll_url || tweetId), 'ok');
     loadApprovals();
 
   } catch(e) {
     showToast('Error: ' + e.message, 'err');
     btn.disabled    = false;
-    btn.textContent = '▶ Post Poll Now';
+    btn.textContent = '▶ Post Poll as Reply';
   }
 }
 
