@@ -1165,10 +1165,15 @@ function renderScanList(items) {
       <div class="approval-question">${item.ai_question || 'No AI poll generated'}</div>
       ${opts.length ? `<div class="approval-options">${opts.map(o => `<span class="option-chip">${o}</span>`).join('')}</div>` : ''}
       ${item.tweet_text ? `<div class="approval-context">"${item.tweet_text.slice(0, 200)}..."</div>` : ''}
+      <div class="reply-prompt">
+        <span class="reply-prompt-label">📋 Reply text:</span>
+        <span class="reply-prompt-text">What do verified constituents actually think about this? 🗳️ Poll below...</span>
+        <button class="reply-copy-btn" onclick="event.stopPropagation(); copyReplyText(this)">Copy</button>
+      </div>
       <div class="approval-actions">
-        <button class="btn-approve" onclick="approveScan('${item.tweet_id}', this)">↗ Open &amp; Tag to Approve</button>
-        <button class="btn-skip"    onclick="skipScan('${item.tweet_id}', this)">Skip</button>
-        <a class="btn-view" href="${item.tweet_url}" target="_blank">View original ↗</a>
+        <button class="btn-open" onclick="openAndMark('${item.tweet_id}', '${item.tweet_url}')">↗ Step 1: Open Post on X</button>
+        <button class="btn-approve" id="post-btn-${item.tweet_id}" onclick="approveScan('${item.tweet_id}', this)" disabled style="opacity:0.4;">▶ Step 2: Post Poll</button>
+        <button class="btn-skip" onclick="skipScan('${item.tweet_id}', this)">Skip</button>
       </div>
     </div>`;
   }).join('');
@@ -1207,7 +1212,7 @@ function safeParseOptions(json) {
   catch { return []; }
 }
 
-function copyReplyText(tweetId, btnEl) {
+function copyReplyText(btnEl) {
   const text = "What do verified constituents actually think about this? 🗳️ Poll below...";
   navigator.clipboard.writeText(text).then(() => {
     if (btnEl) {
